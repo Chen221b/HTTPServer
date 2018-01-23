@@ -60,18 +60,15 @@ int main(int argc, char const *argv[])
 			snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
 		printf("Connection from %s\n", addrStr);
 		if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
-			close(cfd);
-			continue;
+			printf("Content is null\n");
+		}else{
+			printf("%s\n", reqLenStr);
 		}
-		reqLen = atoi(reqLenStr);
-		if(reqLen <= 0){
-			close(cfd);
-			continue;
-		}
-		snprintf(seqNumStr, INT_LEN, "%d\n", seqNum);
-		if(write(cfd, &seqNumStr, strlen(seqNumStr)) != strlen(seqNumStr))
-			fprintf(stderr, "Error on write");
-		seqNum += reqLen;
+		// snprintf(seqNumStr, INT_LEN, "%d\n", seqNum);
+		// if(write(cfd, &seqNumStr, strlen(seqNumStr)) != strlen(seqNumStr))
+		// 	fprintf(stderr, "Error on write");
+		// seqNum += reqLen;
+		close(cfd);
 	}
 
 	return 0;
