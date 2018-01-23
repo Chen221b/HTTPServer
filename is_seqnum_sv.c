@@ -60,18 +60,23 @@ int main(int argc, char const *argv[])
 			snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
 		printf("Connection from %s\n", addrStr);
 		if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
-			close(cfd);
-			continue;
+			printf("Content is null\n");
+		}else{
+			printf("%s\n", reqLenStr);
 		}
-		reqLen = atoi(reqLenStr);
-		if(reqLen <= 0){
-			close(cfd);
-			continue;
-		}
-		snprintf(seqNumStr, INT_LEN, "%d\n", seqNum);
-		if(write(cfd, &seqNumStr, strlen(seqNumStr)) != strlen(seqNumStr))
-			fprintf(stderr, "Error on write");
-		seqNum += reqLen;
+		snprintf(seqNumStr, INT_LEN, "HTTP/1.1 200 OK\r\nServer:Damon\r\n\r\n<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
+		send(cfd, &seqNumStr, strlen(seqNumStr), 0);
+		// snprintf(seqNumStr, INT_LEN, "Server:Damon\r\n");
+		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
+		// snprintf(seqNumStr, INT_LEN, "\r\n");
+		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
+		// snprintf(seqNumStr, INT_LEN, "<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
+		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
+
+		// snprintf(seqNumStr, INT_LEN, "HTTP/1.1 201 OK\r\nServer:Damon\n\n<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
+		// write(cfd, &seqNumStr, strlen(seqNumStr));
+		
+		close(cfd);
 	}
 
 	return 0;

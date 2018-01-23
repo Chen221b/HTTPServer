@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/types.h>
 
 #define PORT_NUM "50000"
-#define INT_LEN 30
+#define INT_LEN 300

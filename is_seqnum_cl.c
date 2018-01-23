@@ -36,7 +36,7 @@ int main(int argc, char const *argv[])
 	write(cfd, reqLenStr, strlen(reqLenStr));
 	write(cfd, "\n", 1);
 	numRead = readLine(cfd, seqNumStr, INT_LEN);
-	printf("Sequence number: %s", seqNumStr);
+	printf("Sever Content:\n%s", seqNumStr);
 
 	return 0;
 }
