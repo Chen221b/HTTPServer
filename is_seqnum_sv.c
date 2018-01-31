@@ -2,14 +2,23 @@
 
 #include <netdb.h>
 #include "is_seqnum.h"
+#include "r_w_func.c"
 
 #define BACKLOG 50
 
-ssize_t readLine(int fd, void *buffer, size_t n);
+void sig_child(int sig)
+{
+	pid_t pid;
+	int stat;
+	while((pid = waitpid(-1, &stat, WNOHANG)) > 0)
+		printf("child %d terminate\n", pid);
+	return;
+}
 
 int main(int argc, char const *argv[])
 {
 	uint32_t seqNum;
+	pid_t childPID;
 	char reqLenStr[INT_LEN];
 	char seqNumStr[INT_LEN];
 	struct sockaddr_storage claddr;
@@ -21,10 +30,13 @@ int main(int argc, char const *argv[])
 	char addrStr[ADDRSTRLEN];
 	char host[NI_MAXHOST];
 	char service[NI_MAXSERV];
+	void sig_child(int);
 
 	seqNum = 0;
 
 	signal(SIGPIPE, SIG_IGN);	//SIG_IGN ignore the signal and return 1
+
+	signal(SIGCHLD, sig_child);
 
 	memset(&hints, 0, sizeof(struct addrinfo));
 	hints.ai_canonname = NULL;
@@ -48,33 +60,35 @@ int main(int argc, char const *argv[])
 
 	listen(lfd, BACKLOG);
 	freeaddrinfo(result);
+
 	for(;;){
 		addrlen = sizeof(struct sockaddr_storage);
 		cfd = accept(lfd, (struct sockaddr *) &claddr, &addrlen);
-
-		if(cfd == -1)
-			continue;
-		if(getnameinfo((struct sockaddr *) &claddr, addrlen, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-			snprintf(addrStr, ADDRSTRLEN, ("%s, %s"), host, service);
-		else
-			snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
-		printf("Connection from %s\n", addrStr);
-		if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
-			printf("Content is null\n");
-		}else{
-			printf("%s\n", reqLenStr);
+		if(cfd < 0)
+		{
+			if(errno == EINTR)
+				continue;
+			else
+				printf("Accept error.\n");
 		}
-		snprintf(seqNumStr, INT_LEN, "HTTP/1.1 200 OK\r\nServer:Damon\r\n\r\n<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
-		send(cfd, &seqNumStr, strlen(seqNumStr), 0);
-		// snprintf(seqNumStr, INT_LEN, "Server:Damon\r\n");
-		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
-		// snprintf(seqNumStr, INT_LEN, "\r\n");
-		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
-		// snprintf(seqNumStr, INT_LEN, "<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
-		// send(cfd, &seqNumStr, strlen(seqNumStr), 0);
 
-		// snprintf(seqNumStr, INT_LEN, "HTTP/1.1 201 OK\r\nServer:Damon\n\n<HTML><BODY>Damon\r\n</BODY></HTML>\r\n");
-		// write(cfd, &seqNumStr, strlen(seqNumStr));
+		if((childPID = fork()) == 0)
+		{
+			close(lfd);
+			if(getnameinfo((struct sockaddr *) &claddr, addrlen, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+				snprintf(addrStr, ADDRSTRLEN, ("%s, %s"), host, service);
+			else
+				snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
+			printf("Connection from %s\n", addrStr);
+			if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
+				printf("Content is null\n");
+			}else{
+				printf("%s\n", reqLenStr);
+			}
+			snprintf(seqNumStr, sizeof(seqNumStr), "Server answer back\n");
+			write(cfd, &seqNumStr, strlen(seqNumStr));
+			exit(0);
+		}
 		
 		close(cfd);
 	}
@@ -82,36 +96,3 @@ int main(int argc, char const *argv[])
 	return 0;
 }
 
-ssize_t readLine(int fd, void *buffer, size_t n)
-{
-	ssize_t numRead;
-	size_t totRead;
-	char* buf;
-	char ch;
-
-	buf = buffer;
-	totRead = 0;
-	for(;;){
-		numRead = read(fd, &ch, 1);
-		if(numRead == -1){
-			if(errno == EINTR)
-				continue;
-			else 
-				return -1;
-		}else if(numRead == 0){
-			if(totRead == 0)
-				return 0;
-			else
-				break;
-		}else{
-			if(totRead < n - 1){
-				totRead++;
-				*buf++ = ch;
-			}
-			if(ch == '\n')
-				break;
-		}
-	}
-	*buf = '\0';
-	return totRead;
-}

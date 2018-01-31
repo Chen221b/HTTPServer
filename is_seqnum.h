@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #define PORT_NUM "50000"
 #define INT_LEN 300
