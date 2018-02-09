@@ -31,6 +31,7 @@ int main(int argc, char const *argv[])
 	char host[NI_MAXHOST];
 	char service[NI_MAXSERV];
 	void sig_child(int);
+	int readNum;
 
 	seqNum = 0;
 
@@ -72,21 +73,32 @@ int main(int argc, char const *argv[])
 				printf("Accept error.\n");
 		}
 
+		// if((childPID = fork()) == 0)
+		// {
+		// 	close(lfd);
+		// 	if(getnameinfo((struct sockaddr *) &claddr, addrlen, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
+		// 		snprintf(addrStr, ADDRSTRLEN, ("%s, %s"), host, service);
+		// 	else
+		// 		snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
+		// 	printf("Connection from %s\n", addrStr);
+		// 	if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
+		// 		printf("Content is null\n");
+		// 	}else{
+		// 		printf("%s\n", reqLenStr);
+		// 	}
+		// 	snprintf(seqNumStr, sizeof(seqNumStr), "Server answer back\n");
+		// 	write(cfd, &seqNumStr, strlen(seqNumStr));
+		// 	exit(0);
+		// }
+
 		if((childPID = fork()) == 0)
 		{
 			close(lfd);
-			if(getnameinfo((struct sockaddr *) &claddr, addrlen, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-				snprintf(addrStr, ADDRSTRLEN, ("%s, %s"), host, service);
-			else
-				snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
-			printf("Connection from %s\n", addrStr);
-			if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
-				printf("Content is null\n");
-			}else{
-				printf("%s\n", reqLenStr);
+			while((readNum = read(cfd, seqNumStr, sizeof(seqNumStr) - 1)) > 0)
+			{
+				seqNumStr[readNum + 1] = '\0';
+				printf("%s\n", seqNumStr);
 			}
-			snprintf(seqNumStr, sizeof(seqNumStr), "Server answer back\n");
-			write(cfd, &seqNumStr, strlen(seqNumStr));
 			exit(0);
 		}
 		

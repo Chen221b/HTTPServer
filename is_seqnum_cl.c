@@ -33,11 +33,17 @@ int main(int argc, char const *argv[])
 	}
 
 	freeaddrinfo(result);
-	reqLenStr = (argc > 2) ? argv[2] : "Client ask for";
-	write(cfd, reqLenStr, strlen(reqLenStr));
-	write(cfd, "\n", 1);
-	numRead = readLine(cfd, seqNumStr, INT_LEN);
-	printf("Sever Content:\n%s", seqNumStr);
+
+	// reqLenStr = (argc > 2) ? argv[2] : "Client ask for";
+	// write(cfd, reqLenStr, strlen(reqLenStr));
+	// write(cfd, "\n", 1);
+	// numRead = readLine(cfd, seqNumStr, INT_LEN);
+	// printf("Sever Content:\n%s", seqNumStr);
+
+	while(read(1, reqLenStr, sizeof(reqLenStr)) > 0)
+	{
+		write(cfd, reqLenStr, strlen(reqLenStr));
+	}
 
 	return 0;
 }
