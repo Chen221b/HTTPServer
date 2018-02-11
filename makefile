@@ -1,10 +1,10 @@
-is_seqnum_sv is_seqnum_cl:is_seqnum_sv.o is_seqnum_cl.o
-	gcc -o is_seqnum_sv is_seqnum_sv.o
-	gcc -o is_seqnum_cl is_seqnum_cl.o
+server client:server.o client.o
+	gcc -o server server.o
+	gcc -o client client.o
 
-is_seqnum_sv.o: is_seqnum.h r_w_func.c
+server.o: lib.h r_w_func.c
 
-is_seqnum_cl.o: is_seqnum.h r_w_func.c
+client.o: lib.h r_w_func.c
 
 clean:
 	rm *.o

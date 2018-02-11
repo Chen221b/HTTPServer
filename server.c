@@ -1,10 +1,11 @@
 #define _BSD_SOURCE
 
 #include <netdb.h>
-#include "is_seqnum.h"
+#include "lib.h"
 #include "r_w_func.c"
 
 #define BACKLOG 50
+#define ADDRLEN 20
 
 void sig_child(int sig)
 {
@@ -17,23 +18,14 @@ void sig_child(int sig)
 
 int main(int argc, char const *argv[])
 {
-	uint32_t seqNum;
 	pid_t childPID;
-	char reqLenStr[INT_LEN];
-	char seqNumStr[INT_LEN];
-	struct sockaddr_storage claddr;
-	int lfd, cfd, optval, reqLen;
+	char requestStr[INT_LEN], addrStr[ADDRLEN];
+	struct sockaddr_in claddr;
+	int lfd, cfd, optval, reqLen, readNum;
 	socklen_t addrlen;
 	struct addrinfo hints;
 	struct addrinfo *result, *rp;
-	#define ADDRSTRLEN (NI_MAXHOST + NI_MAXSERV + 10)
-	char addrStr[ADDRSTRLEN];
-	char host[NI_MAXHOST];
-	char service[NI_MAXSERV];
 	void sig_child(int);
-	int readNum;
-
-	seqNum = 0;
 
 	signal(SIGPIPE, SIG_IGN);	//SIG_IGN ignore the signal and return 1
 
@@ -63,41 +55,25 @@ int main(int argc, char const *argv[])
 	freeaddrinfo(result);
 
 	for(;;){
-		addrlen = sizeof(struct sockaddr_storage);
+		addrlen = sizeof(claddr);
 		cfd = accept(lfd, (struct sockaddr *) &claddr, &addrlen);
-		if(cfd < 0)
-		{
+		if(cfd < 0){
 			if(errno == EINTR)
 				continue;
-			else
+			else{
 				printf("Accept error.\n");
+				sleep(1);
+			}
 		}
-
-		// if((childPID = fork()) == 0)
-		// {
-		// 	close(lfd);
-		// 	if(getnameinfo((struct sockaddr *) &claddr, addrlen, host, NI_MAXHOST, service, NI_MAXSERV, 0) == 0)
-		// 		snprintf(addrStr, ADDRSTRLEN, ("%s, %s"), host, service);
-		// 	else
-		// 		snprintf(addrStr, ADDRSTRLEN, "(?UNKNOWN?)");
-		// 	printf("Connection from %s\n", addrStr);
-		// 	if(readLine(cfd, reqLenStr, INT_LEN) <= 0){
-		// 		printf("Content is null\n");
-		// 	}else{
-		// 		printf("%s\n", reqLenStr);
-		// 	}
-		// 	snprintf(seqNumStr, sizeof(seqNumStr), "Server answer back\n");
-		// 	write(cfd, &seqNumStr, strlen(seqNumStr));
-		// 	exit(0);
-		// }
 
 		if((childPID = fork()) == 0)
 		{
 			close(lfd);
-			while((readNum = read(cfd, seqNumStr, sizeof(seqNumStr) - 1)) > 0)
+			while((readNum = read(cfd, requestStr, sizeof(requestStr) - 1)) > 0)
 			{
-				seqNumStr[readNum + 1] = '\0';
-				printf("%s\n", seqNumStr);
+				requestStr[readNum + 1] = '\0';
+				printf("%20s From: %-30s %-10d\n",
+				 requestStr, inet_ntop(AF_INET, &claddr.sin_addr, addrStr, sizeof(addrStr)), ntohs(claddr.sin_port));
 			}
 			exit(0);
 		}

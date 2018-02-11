@@ -1,12 +1,12 @@
 #include <netdb.h>
-#include "is_seqnum.h"
+#include "lib.h"
 #include "r_w_func.c"
 
 ssize_t readLine(int fd, void *buffer, size_t n);
 
 int main(int argc, char const *argv[])
 {
-	char* reqLenStr;
+	char* requestStr;
 	char seqNumStr[INT_LEN];
 	int cfd;
 	ssize_t numRead;
@@ -34,16 +34,9 @@ int main(int argc, char const *argv[])
 
 	freeaddrinfo(result);
 
-	// reqLenStr = (argc > 2) ? argv[2] : "Client ask for";
-	// write(cfd, reqLenStr, strlen(reqLenStr));
-	// write(cfd, "\n", 1);
-	// numRead = readLine(cfd, seqNumStr, INT_LEN);
-	// printf("Sever Content:\n%s", seqNumStr);
-
-	while(read(1, reqLenStr, sizeof(reqLenStr)) > 0)
-	{
-		write(cfd, reqLenStr, strlen(reqLenStr));
-	}
+	snprintf(seqNumStr, sizeof(seqNumStr), "A Message.");
+	requestStr = seqNumStr;
+	write(cfd, requestStr, strlen(requestStr));
 
 	return 0;
 }
